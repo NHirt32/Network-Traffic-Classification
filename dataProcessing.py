@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import dataVisualization as dv
 
 pd.set_option('display.max_columns', None)
 
@@ -30,8 +31,8 @@ def encoding(trainingData, testData):
     """
     le = LabelEncoder()
     for column in nonNumericColumns:
-        trainingData[column] = le.fit_transform(trainingData[column])
-        testData[column] = le.fit_transform(testData[column])
+        trainingData.loc[:, column] = le.fit_transform(trainingData[column])
+        testData.loc[:, column] = le.fit_transform(testData[column])
     return trainingData, testData
 
 def scaling(trainingData, testData, scalableFeatureList):
@@ -49,8 +50,8 @@ def scaling(trainingData, testData, scalableFeatureList):
         testMax = testData[feature].max()
         trainingMin = trainingData[feature].min()
         testMin = testData[feature].min()
-        trainingData[feature] = (trainingData[feature] - trainingMin) / (trainingMax - trainingMin)
-        testData[feature] = (testData[feature] - testMin) / (testMax - testMin)
+        trainingData.loc[:, feature] = (trainingData[feature] - trainingMin) / (trainingMax - trainingMin)
+        testData.loc[:, feature] = (testData[feature] - testMin) / (testMax - testMin)
     return trainingData, testData
 
 def trainingSplit(splitRatio, combinedData):
@@ -63,7 +64,7 @@ def trainingSplit(splitRatio, combinedData):
         combinedData (DataFrame): Our initial dataframe prior to splitting
 
     Returns:
-        tuple:
+        tuple: Our training and testing dataframes split from the original singular dataframe
     """
     splitIndex = int(splitRatio * len(combinedData))
 
@@ -71,6 +72,23 @@ def trainingSplit(splitRatio, combinedData):
     testData = combinedData.iloc[splitIndex:]
 
     return trainingData, testData
+
+def targetSplit(trainingData, testData):
+    """
+    This function splits training and testing dataframes into feature and targets
+
+    Args:
+        trainingData (DataFrame):
+        testData (DataFrame):
+
+    Returns:
+        tuple: Dataframes for both training and testing split into feature and target dataframes
+    """
+    trainingDataTargets = trainingData['level'].copy()
+    trainingDataFeatures = trainingData.drop('level', axis=1)
+    testDataTargets = testData['level'].copy()
+    testDataFeatures = testData.drop('level', axis=1)
+    return trainingDataFeatures, trainingDataTargets, testDataFeatures, testDataTargets
 
 def dataPreprocessing(trainingFile):
     """
@@ -86,11 +104,12 @@ def dataPreprocessing(trainingFile):
         tuple: Returns two DataFrames which have been encoded, imputed, and scaled
     """
     combinedData = fileRead(trainingFile)
-    scalableFeatureList = combinedData.values.tolist()
     trainingData, testData = trainingSplit(0.8, combinedData)
     trainingData, testData = encoding(trainingData, testData)
-    trainingData, testData = scaling(trainingData, testData, scalableFeatureList)
-    return trainingData, testData
+    trainingDataFeatures, trainingDataTargets, testDataFeatures, testDataTargets = targetSplit(trainingData, testData)
+    scalableFeatureList = trainingDataFeatures.columns
+    trainingDataFeatures, testDataFeatures = scaling(trainingDataFeatures, testDataFeatures, scalableFeatureList)
+    return trainingDataFeatures, trainingDataTargets, testDataFeatures, testDataTargets
 
 def predictionCombine(prediction, testData):
     """
@@ -102,6 +121,6 @@ def predictionCombine(prediction, testData):
     Returns:
         DataFrame: Final DataFrame with paired survival prediction and PassengerId
     """
-    prediction = pd.DataFrame({'PassengerId': testData.PassengerId, 'Survived': prediction})
+    prediction = pd.DataFrame({'level': testData.level, 'Survived': prediction})
     return prediction
 
