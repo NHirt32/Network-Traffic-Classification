@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 import dataVisualization as dv
+from sklearn.model_selection import train_test_split
 
 pd.set_option('display.max_columns', None)
 
@@ -19,21 +20,22 @@ def fileRead(trainFile):
     trainingData = pd.read_csv(trainFile)
     return trainingData
 
-def encoding(trainingData, testData):
+def encoding(trainTargets, testTargets):
     """
     This function encodes non-numeric columns of two dataframes into numeric columns
 
     Args:
-        trainingData (DataFrame): Training data of machine learning model in Pandas DataFrame format
-        testData (DataFrame): Test Data for machine learning model in Pandas DataFrame format
+        trainTargets (DataFrame): Training targets dataframe
+        testTargets (DataFrame): Test target dataframe
     Returns:
         tuple: Returns a tuple of training and testing dataframes with non-numeric data encoded into numeric data
     """
     le = LabelEncoder()
-    for column in nonNumericColumns:
-        trainingData.loc[:, column] = le.fit_transform(trainingData[column])
-        testData.loc[:, column] = le.fit_transform(testData[column])
-    return trainingData, testData
+
+    testTargets = le.fit_transform(testTargets)
+    trainTargets = le.fit_transform(trainTargets)
+
+    return trainTargets, testTargets
 
 def scaling(trainingData, testData, scalableFeatureList):
     """
@@ -45,6 +47,9 @@ def scaling(trainingData, testData, scalableFeatureList):
     Returns:
         tuple: Returns a tuple of training and testing dataframes where all numeric columns have been scaled between 0 - 1
     """
+
+
+
     for feature in scalableFeatureList:
         trainingMax = trainingData[feature].max()
         testMax = testData[feature].max()
@@ -66,29 +71,15 @@ def trainingSplit(splitRatio, combinedData):
     Returns:
         tuple: Our training and testing dataframes split from the original singular dataframe
     """
-    splitIndex = int(splitRatio * len(combinedData))
+    features = combinedData.drop(columns=['level'])
+    target = combinedData['level']
+    trainFeatures, testFeatures, trainTargets, testTargets = train_test_split(features, target, test_size = splitRatio, random_state = 0)
 
-    trainingData = combinedData.iloc[:splitIndex]
-    testData = combinedData.iloc[splitIndex:]
+    trainFeaturesDF = pd.DataFrame(trainFeatures, columns=features.columns)
+    testFeaturesDF = pd.DataFrame(testFeatures, columns=features.columns)
 
-    return trainingData, testData
+    return trainFeaturesDF, trainTargets, testFeaturesDF, testTargets
 
-def targetSplit(trainingData, testData):
-    """
-    This function splits training and testing dataframes into feature and targets
-
-    Args:
-        trainingData (DataFrame):
-        testData (DataFrame):
-
-    Returns:
-        tuple: Dataframes for both training and testing split into feature and target dataframes
-    """
-    trainingDataTargets = trainingData['level'].copy()
-    trainingDataFeatures = trainingData.drop('level', axis=1)
-    testDataTargets = testData['level'].copy()
-    testDataFeatures = testData.drop('level', axis=1)
-    return trainingDataFeatures, trainingDataTargets, testDataFeatures, testDataTargets
 
 def dataPreprocessing(trainingFile):
     """
@@ -104,12 +95,10 @@ def dataPreprocessing(trainingFile):
         tuple: Returns two DataFrames which have been encoded, imputed, and scaled
     """
     combinedData = fileRead(trainingFile)
-    trainingData, testData = trainingSplit(0.8, combinedData)
-    trainingData, testData = encoding(trainingData, testData)
-    trainingDataFeatures, trainingDataTargets, testDataFeatures, testDataTargets = targetSplit(trainingData, testData)
-    scalableFeatureList = trainingDataFeatures.columns
-    trainingDataFeatures, testDataFeatures = scaling(trainingDataFeatures, testDataFeatures, scalableFeatureList)
-    return trainingDataFeatures, trainingDataTargets, testDataFeatures, testDataTargets
+    trainFeatures, trainTargets, testFeatures, testTargets = trainingSplit(0.2, combinedData)
+    trainTargets, testTargets = encoding(trainTargets, testTargets)
+    trainFeatures, testFeatures = scaling(trainFeatures, testFeatures, trainFeatures.columns.tolist())
+    return trainFeatures, trainTargets, testFeatures, testTargets
 
 def predictionCombine(prediction, testData):
     """

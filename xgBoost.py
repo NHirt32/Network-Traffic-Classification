@@ -1,4 +1,4 @@
-from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score
 
 def fit(trainFeatures, trainTargets):
@@ -8,18 +8,17 @@ def fit(trainFeatures, trainTargets):
     :param trainTargets:
     :return:
     """
-    rfc = RandomForestClassifier()
-    rfc.fit(trainFeatures, trainTargets)
-    return rfc
+    xgb = XGBClassifier()
+    xgb.fit(trainFeatures, trainTargets)
+    return xgb
 
 def testPredict(model, testFeatures):
     prediction = model.predict(testFeatures)
     return prediction
 
-def randForest(trainFeatures, trainTargets, testFeatures, testTargets):
+def xgb(trainFeatures, trainTargets, testFeatures, testTargets):
     trainedModel = fit(trainFeatures, trainTargets)
     prediction = testPredict(trainedModel, testFeatures)
-    rfcAccuracy = accuracy_score(testTargets, prediction)
-    print(f"Random Forrest Accuracy: {rfcAccuracy}")
-    return rfcAccuracy
-
+    xgbAccuracy = accuracy_score(testTargets, prediction)
+    print(f"XGB Classifier accuracy: {xgbAccuracy}")
+    return xgbAccuracy
