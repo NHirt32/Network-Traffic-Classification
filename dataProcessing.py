@@ -98,6 +98,9 @@ def dataPreprocessing(trainingFile):
     trainFeatures, trainTargets, testFeatures, testTargets = trainingSplit(0.2, combinedData)
     trainTargets, testTargets = encoding(trainTargets, testTargets)
     trainFeatures, testFeatures = scaling(trainFeatures, testFeatures, trainFeatures.columns.tolist())
+    combinedTrain = trainFeatures.copy()
+    combinedTrain['level'] = trainTargets.tolist()
+    dv.heatmap(combinedTrain)
     return trainFeatures, trainTargets, testFeatures, testTargets
 
 def predictionCombine(prediction, testData):

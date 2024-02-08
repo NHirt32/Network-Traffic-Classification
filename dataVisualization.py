@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-plt.figure(figsize=(12,10))
+plt.figure(figsize=(15,10))
 
 def heatmap(dataFrame):
     corrMatrix = dataFrame.corr()
