@@ -35,7 +35,8 @@ def encoding(trainTargets, testTargets):
     testTargets = le.fit_transform(testTargets)
     trainTargets = le.fit_transform(trainTargets)
 
-    return trainTargets, testTargets
+
+    return trainTargets, testTargets, le
 
 def scaling(trainingData, testData, scalableFeatureList):
     """
@@ -85,34 +86,19 @@ def dataPreprocessing(trainingFile):
     """
     This function utilizes various other dataprocessing functions the ordering of this processing is: Reading the
     data into a pandas DataFrame -> Splitting our dataset into training and testing dataframes ->
-    Encoding non-numeric values -> min-max scaling numeric
-
-    values
+    Encoding non-numeric values -> min-max scaling numeric values
 
     Args:
         trainingFile (.csv): .csv file containing our ML-model's training data
     Returns:
-        tuple: Returns two DataFrames which have been encoded, imputed, and scaled
+        tuple:
     """
     combinedData = fileRead(trainingFile)
     trainFeatures, trainTargets, testFeatures, testTargets = trainingSplit(0.2, combinedData)
-    trainTargets, testTargets = encoding(trainTargets, testTargets)
+    trainTargets, testTargets, encoder = encoding(trainTargets, testTargets)
     trainFeatures, testFeatures = scaling(trainFeatures, testFeatures, trainFeatures.columns.tolist())
-    combinedTrain = trainFeatures.copy()
-    combinedTrain['level'] = trainTargets.tolist()
-    dv.heatmap(combinedTrain)
-    return trainFeatures, trainTargets, testFeatures, testTargets
-
-def predictionCombine(prediction, testData):
-    """
-    This function combines the unused test SurvivorId's and our predicted Survivals into a singular DataFrame
-
-    Args:
-        prediction (DataFrame): Our predicted values for survival
-        testData (DataFrame): The DataFrame of our testing data
-    Returns:
-        DataFrame: Final DataFrame with paired survival prediction and PassengerId
-    """
-    prediction = pd.DataFrame({'level': testData.level, 'Survived': prediction})
-    return prediction
+    # combinedTrain = trainFeatures.copy()
+    # combinedTrain['level'] = trainTargets.tolist()
+    # dv.heatmap(combinedTrain)
+    return trainFeatures, trainTargets, testFeatures, testTargets, encoder
 
