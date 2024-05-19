@@ -10,10 +10,6 @@ This project aims to classify network traffic using three different machine lear
         XGBoost
         Random Forest
         Support Vector Machine (SVM)
-    Dataset
-    Results
-    Contributing
-    License
 
 ## Installation
 
